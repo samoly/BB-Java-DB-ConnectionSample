@@ -45,7 +45,7 @@ public class App {
             // Az eredmények kiírása output ablakba
             /*while (rs.next()) {
                 int id = rs.getInt("id");
-                String name = rs.getString("nev");
+                String name = rs.getString("nev");   
                 System.out.println("Id: " + id + ", Name: " + name);
             }*/
             // Az eredmények kiírása txt fileba
