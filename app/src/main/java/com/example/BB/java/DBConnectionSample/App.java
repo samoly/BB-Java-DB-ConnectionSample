@@ -14,31 +14,35 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class App {
-    public String getGreeting() {
-        return "Hello World!";
+    
+    static String url = "jdbc:mysql://localhost:3306/iskola?useUnicode=true&characterEncoding=UTF-8";
+    static String user = "root";
+    static String password = "Factoring123";
+
+    public static void main(String[] args) {    
+        
+        ExecuteSipleDbConnectionQuery();
     }
-
-    public static void main(String[] args) {
-        System.out.println(new App().getGreeting());
-        System.out.println("%s".formatted(System.getProperty("file.encoding")));
-        System.out.println("✨✨✨");
+    
+    public static void ExecuteFileReadingAndInsertIntoDBExample()
+    {
+        //Ha nincs még létrehozva a tábla hozzá, akkor azt létre kell hozni
+        try (Connection conn = DriverManager.getConnection(url, user, password)) {
         
-        try (PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream("output.txt"), "UTF-8"))) {
-        out.println("Id: 1, Name: Kiss József");
-        out.println("Id: 2, Name: Nagy Ágnes");
-        out.println("Id: 3, Name: Horváth István");
-        out.println("Id: 4, Name: Kovács Jóska");
-    } catch (IOException e) {
-        e.printStackTrace();
-}
-        
-        String url = "jdbc:mysql://localhost:3306/iskola?useUnicode=true&characterEncoding=UTF-8";
-        String user = "root";
-        String password = "Factoring123";
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally
+        {
+            
+        }
+    }
+    
 
+    public static void ExecuteSipleDbConnectionQuery()
+    {
         try (Connection conn = DriverManager.getConnection(url, user, password)) {
             // Lekérdezés
-            String sql = "SELECT * FROM tanulok";
+            String sql = "SELECT *, 4, 5 FROM tanulok";
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery(sql);
 
@@ -57,9 +61,14 @@ public class App {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+                
+            conn.close();
         }
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally
+        {
+            
         }
     }
 }
