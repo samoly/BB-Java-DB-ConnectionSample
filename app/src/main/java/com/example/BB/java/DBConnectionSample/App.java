@@ -3,15 +3,14 @@
  */
 package com.example.BB.java.DBConnectionSample;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
+import java.io.*;
+import java.text.ParseException;
+import java.util.Scanner;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class App {
     
@@ -21,16 +20,64 @@ public class App {
 
     public static void main(String[] args) {    
         
-        ExecuteSipleDbConnectionQuery();
+        //ExecuteSipleDbConnectionQuery();
+        ExecuteFileReadingAndInsertIntoDBExample();
     }
     
     public static void ExecuteFileReadingAndInsertIntoDBExample()
     {
+        String sql = """
+                        INSERT INTO employees (name, email, birthdate, department, address, phone, salary, hiredate, position, manager_id)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     """;
+        
         //Ha nincs még létrehozva a tábla hozzá, akkor azt létre kell hozni
+        // ... (adatbázis kapcsolat létrehozása, ahogy az előző példában)
         try (Connection conn = DriverManager.getConnection(url, user, password)) {
+
+            PreparedStatement pstmt = conn.prepareStatement((sql)) ;
+            Scanner scanner = new Scanner(new File("d:\\tmp\\employees.csv")).useDelimiter(",");
+            scanner.nextLine(); // Kihagyjuk a fejlécsort
+
+            while (scanner.hasNextLine()) {
+                String[] data = scanner.nextLine().split("\\|");
+
+                // ... Itt az Id oszlop tartalmára nincs szükség, mert az az elsődleges kulcs, és automatikusan generálódik.
+                //int id = Integer.parseInt(data[0]); 
+                String name = data[1];
+                String email = data[2];
+                // Dátum konvertálás (feltételezzük, hogy az adatbázisban DATE típusú az oszlop)
+                Date birthdate = new SimpleDateFormat("yyyy-MM-dd").parse(data[3]);
+                String department = data[4];
+                String address = data[5];
+                String phone = data[6];
+                double salary = Double.parseDouble(data[7]);
+                Date hiredate = new SimpleDateFormat("yyyy-MM-dd").parse(data[8]);
+                String position = data[9];
+                int managerId = Integer.parseInt(data[10]);
+
+                /*pstmt.setInt(1, id);*/
+                pstmt.setString(1, name);
+                pstmt.setString(2, email);
+                pstmt.setDate(3, new java.sql.Date(birthdate.getTime()));
+                pstmt.setString(4, department);
+                pstmt.setString(5, address);
+                pstmt.setString(6, phone);
+                pstmt.setDouble(7, salary);
+                pstmt.setDate(8, new java.sql.Date(hiredate.getTime()));
+                pstmt.setString(9, position);
+                pstmt.setInt(10, managerId);
+
+                pstmt.executeUpdate();
+            }
+       
         
         } catch (SQLException e) {
             e.printStackTrace();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ParseException ex) {
+            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
         } finally
         {
             
