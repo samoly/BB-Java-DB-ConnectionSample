@@ -11,39 +11,102 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.csv.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class App {
     
     static String url = "jdbc:mysql://localhost:3306/iskola?useUnicode=true&characterEncoding=UTF-8";
     static String user = "root";
     static String password = "Factoring123";
+    static String insertSql = """
+                        INSERT INTO employees (name, email, birthdate, department, address, phone, salary, hiredate, position, manager_id)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     """;
+    static String csvFileName = "d:\\tmp\\employees.csv";
 
     public static void main(String[] args) {    
         
         //ExecuteSipleDbConnectionQuery();
-        ExecuteFileReadingAndInsertIntoDBExample();
+        ExecuteCSVReadingAndInsertIntoDBExample() ;
+        //ExecuteFileReadingAndInsertIntoDBExample();
     }
     
-    public static void ExecuteFileReadingAndInsertIntoDBExample()
+    public static void ExecuteCSVReadingAndInsertIntoDBExample() 
     {
-        String sql = """
-                        INSERT INTO employees (name, email, birthdate, department, address, phone, salary, hiredate, position, manager_id)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                     """;
+        //Ha nincs még létrehozva a tábla hozzá, akkor azt létre kell hozni
+        // ... (adatbázis kapcsolat létrehozása, ahogy az előző példában)
+        try (Connection conn = DriverManager.getConnection(url, user, password)) 
+        {
+
+            PreparedStatement pstmt = conn.prepareStatement((insertSql)) ;
+            
+            List<String[]> data = new ArrayList<>();
+            CSVParser parser = new CSVParser(new FileReader(csvFileName), CSVFormat.DEFAULT.withFirstRecordAsHeader().withDelimiter('|'));
+            
+            for (CSVRecord record : parser) {
+                String[] row = new String[record.size()];
+                for (int i = 0; i < record.size(); i++) {
+                    row[i] = record.get(i);
+                }
+                    data.add(row);
+                    
+                Date birthdate = new SimpleDateFormat("yyyy-MM-dd").parse(row[3]);
+                double salary = Double.parseDouble(row[7]);
+                Date hiredate = new SimpleDateFormat("yyyy-MM-dd").parse(row[8]);
+                int managerId = Integer.parseInt(row[10]);
+                
+                pstmt.setString(1, row[1]);
+                pstmt.setString(2, row[2]);
+                pstmt.setDate(3, new java.sql.Date(birthdate.getTime()));
+                pstmt.setString(4, row[4]);
+                pstmt.setString(5, row[5]);
+                pstmt.setString(6, row[6]);
+                pstmt.setDouble(7, salary);
+                pstmt.setDate(8, new java.sql.Date(hiredate.getTime()));
+                pstmt.setString(9, row[9]);
+                pstmt.setInt(10, managerId);
+                pstmt.addBatch();                
+            }
+            
+            pstmt.executeBatch();
+             
+            parser.close();
+            conn.close();
+        }
+        catch (SQLException e) 
+        {
+            e.printStackTrace();
+        } 
+        catch (FileNotFoundException ex) {
+                Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+        } 
+        catch (IOException ex) {
+            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ParseException ex) {
+            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+        }   
+    }
+    
+    public static void ExecuteFileReadingAndInsertIntoDBExample() 
+    {
+        
         
         //Ha nincs még létrehozva a tábla hozzá, akkor azt létre kell hozni
         // ... (adatbázis kapcsolat létrehozása, ahogy az előző példában)
-        try (Connection conn = DriverManager.getConnection(url, user, password)) {
+        try (Connection conn = DriverManager.getConnection(url, user, password)) 
+        {
 
-            PreparedStatement pstmt = conn.prepareStatement((sql)) ;
-            Scanner scanner = new Scanner(new File("d:\\tmp\\employees.csv")).useDelimiter(",");
+            PreparedStatement pstmt = conn.prepareStatement((insertSql)) ;
+            Scanner scanner = new Scanner(new File(csvFileName));
             scanner.nextLine(); // Kihagyjuk a fejlécsort
 
             while (scanner.hasNextLine()) {
                 String[] data = scanner.nextLine().split("\\|");
 
                 // ... Itt az Id oszlop tartalmára nincs szükség, mert az az elsődleges kulcs, és automatikusan generálódik.
-                //int id = Integer.parseInt(data[0]); 
+                int id = Integer.parseInt(data[0]); 
                 String name = data[1];
                 String email = data[2];
                 // Dátum konvertálás (feltételezzük, hogy az adatbázisban DATE típusú az oszlop)
@@ -69,16 +132,29 @@ public class App {
                 pstmt.setInt(10, managerId);
 
                 pstmt.executeUpdate();
+                
+                
             }
-       
+            
+            conn.close();
         
-        } catch (SQLException e) {
+        } 
+        catch (SQLException e) 
+        {
             e.printStackTrace();
-        } catch (FileNotFoundException ex) {
+        } 
+        catch (FileNotFoundException ex) 
+        {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ParseException ex) {
+        } 
+        catch (ParseException ex) 
+        {
             Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
-        } finally
+        } 
+        /*catch (ParseException ex) {
+            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+        } */
+        finally
         {
             
         }
